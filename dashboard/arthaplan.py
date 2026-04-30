@@ -24,10 +24,6 @@ def load_data():
     st.stop()
 
 df = load_data()
-
-# ======================
-# DEBUG (OPTIONAL)
-# ======================
 st.write("📊 Kolom dataset:", df.columns)
 
 # ======================
@@ -59,8 +55,6 @@ if 'credit_limit_rupiah' not in df.columns:
 # FEATURE ENGINEERING
 # ======================
 if 'total_limit' not in df.columns or 'jumlah_kartu' not in df.columns:
-
-    st.warning("⚠️ Kolom belum lengkap, membuat feature otomatis...")
 
     user_limit = df.groupby('client_id')['credit_limit_rupiah'].sum().reset_index()
     user_limit.columns = ['client_id', 'total_limit']
