@@ -88,62 +88,109 @@ if 'overbudget' not in df.columns:
     df['overbudget'] = df['total_limit'] > df['total_limit'].mean()
 
 # ======================
-# SIDEBAR STYLE
+# SIDEBAR UI ADVANCED
 # ======================
-st.markdown("""
-    <style>
-    .sidebar .sidebar-content {
-        background-color: #f8fafc;
-    }
-    .filter-box {
-        padding: 15px;
-        border-radius: 12px;
-        background-color: white;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-        margin-bottom: 15px;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-st.sidebar.title("⚙️ Filter Data")
+st.sidebar.markdown("## ⚙️ Smart Filter Panel")
 
 # ======================
-# FILTER BOX 1
+# MODE FILTER
 # ======================
-st.sidebar.markdown("### 🏷️ Kategori")
+mode = st.sidebar.radio(
+    "Mode Filter",
+    ["Basic", "Advanced"],
+    horizontal=True
+)
 
+# ======================
+# KATEGORI FILTER
+# ======================
 kategori_list = df['kategori'].dropna().unique()
 
 kategori = st.sidebar.multiselect(
-    "Pilih kategori user:",
+    "🏷️ Pilih Kategori",
     kategori_list,
     default=list(kategori_list)
 )
 
 # ======================
-# FILTER BOX 2
+# RANGE LIMIT
 # ======================
-st.sidebar.markdown("### 💰 Total Limit")
-
 min_limit = int(df['total_limit'].min())
 max_limit = int(df['total_limit'].max())
 
 range_limit = st.sidebar.slider(
-    "Range limit (Rp)",
+    "💰 Range Total Limit",
     min_limit,
     max_limit,
     (min_limit, max_limit),
     step=100000
 )
 
+st.sidebar.caption(
+    f"📊 Rp {range_limit[0]:,} — Rp {range_limit[1]:,}"
+)
+
+# ======================
+# ADVANCED FILTER
+# ======================
+if mode == "Advanced":
+
+    st.sidebar.markdown("### 🔬 Advanced Options")
+
+    show_overbudget = st.sidebar.checkbox("Tampilkan hanya Overbudget")
+
+    min_kartu = st.sidebar.number_input(
+        "Minimum Jumlah Kartu",
+        min_value=0,
+        max_value=int(df['jumlah_kartu'].max()),
+        value=0
+    )
+
+else:
+    show_overbudget = False
+    min_kartu = 0
+
 # ======================
 # APPLY FILTER
 # ======================
-df = df[
+df_filtered = df[
     (df['kategori'].isin(kategori)) &
     (df['total_limit'] >= range_limit[0]) &
-    (df['total_limit'] <= range_limit[1])
+    (df['total_limit'] <= range_limit[1]) &
+    (df['jumlah_kartu'] >= min_kartu)
 ]
+
+if show_overbudget:
+    df_filtered = df_filtered[df_filtered['overbudget'] == True]
+
+# ======================
+# RESET BUTTON
+# ======================
+if st.sidebar.button("🔄 Reset Semua Filter"):
+    st.experimental_rerun()
+
+# ======================
+# MINI INSIGHT SIDEBAR
+# ======================
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 📊 Quick Insight")
+
+st.sidebar.metric("👥 User", df_filtered['client_id'].nunique())
+st.sidebar.metric("💰 Avg Limit", f"Rp {df_filtered['total_limit'].mean():,.0f}")
+st.sidebar.metric("🚨 Overbudget", df_filtered['overbudget'].sum())
+
+# ======================
+# PROGRESS BAR (INTERAKTIF)
+# ======================
+over_pct = df_filtered['overbudget'].mean() if len(df_filtered) > 0 else 0
+
+st.sidebar.markdown("### 🚨 Risk Level")
+st.sidebar.progress(float(over_pct))
+
+# ======================
+# GUNAKAN DATA INI
+# ======================
+df = df_filtered
 
 # ======================
 # METRICS
