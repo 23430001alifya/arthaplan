@@ -20,7 +20,7 @@ file_path = os.path.join(base_path, "..", "main_data.csv")
 def load_data():
     return pd.read_csv(file_path)
 
-data = load_data()
+df = load_data()
 
 # ======================
 # SIDEBAR FILTER
@@ -29,7 +29,7 @@ st.sidebar.header("🔧 Filter")
 
 kategori = st.sidebar.multiselect(
     "Pilih Kategori",
-    data['kategori'].unique(),
+    df['kategori'].unique(),
     default=data['kategori'].unique()
 )
 
