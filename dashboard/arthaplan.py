@@ -7,7 +7,7 @@ import plotly.express as px
 # CONFIG
 # ======================
 st.set_page_config(page_title="ArthaPlan Dashboard", layout="wide")
-st.title("ArthaPlan Dashboard")
+st.title("💸 ArthaPlan Dashboard")
 
 # ======================
 # LOAD DATA (AUTO PATH)
