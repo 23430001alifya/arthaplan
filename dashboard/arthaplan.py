@@ -24,6 +24,9 @@ def load_data():
 
 df = load_data()
 
+st.write("Kolom dataset:", df.columns)
+st.write(df.head())
+
 # ======================
 # CLEAN DATA
 # ======================
