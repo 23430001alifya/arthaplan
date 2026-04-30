@@ -24,7 +24,7 @@ def load_data():
     st.stop()
 
 df = load_data()
-st.write("📊 Kolom dataset:", df.columns)
+
 
 # ======================
 # CLEAN DATA (RUPIAH)
