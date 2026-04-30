@@ -31,6 +31,31 @@ def load_data():
 df = load_data()
 
 # ======================
+# FEATURE ENGINEERING OTOMATIS
+# ======================
+
+# Jika belum ada total_limit & jumlah_kartu
+if 'total_limit' not in df.columns or 'jumlah_kartu' not in df.columns:
+
+    st.warning("⚠️ Kolom belum lengkap, membuat feature otomatis...")
+
+    # Pastikan credit_limit_rupiah ada
+    if 'credit_limit_rupiah' not in df.columns:
+        st.error("❌ Kolom credit_limit_rupiah tidak ditemukan")
+        st.stop()
+
+    # Grouping per user
+    user_limit = df.groupby('client_id')['credit_limit_rupiah'].sum().reset_index()
+    user_limit.columns = ['client_id', 'total_limit']
+
+    user_cards = df.groupby('client_id').size().reset_index(name='jumlah_kartu')
+
+    user_data = pd.merge(user_limit, user_cards, on='client_id')
+
+    # Merge balik ke df
+    df = pd.merge(df, user_data, on='client_id', how='left')
+
+# ======================
 # VALIDASI KOLOM
 # ======================
 required_cols = ['client_id', 'kategori', 'total_limit', 'jumlah_kartu', 'credit_limit_rupiah', 'overbudget']
