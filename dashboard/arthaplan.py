@@ -49,7 +49,7 @@ st.sidebar.header("🔧 Filter Data")
 kategori = st.sidebar.multiselect(
     "Pilih Kategori",
     df['kategori'].unique(),
-    default=df['kategori'].unique()
+    default=data['kategori'].unique()
 )
 
 min_limit, max_limit = st.sidebar.slider(
