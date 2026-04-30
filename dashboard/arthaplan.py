@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
 import os
 
 st.set_page_config(page_title="ArthaPlan Dashboard", layout="wide")
