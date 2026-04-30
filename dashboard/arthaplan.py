@@ -68,7 +68,8 @@ col3.metric("Rata-rata Limit", f"{df['total_limit'].mean():,.0f}")
 # ======================
 # VISUALISASI
 # ======================
-import matplotlib.pyplot as plt
+st.bar_chart(df['kategori'].value_counts())
+
 
 st.subheader("Segmentasi Pengguna")
 fig1, ax1 = plt.subplots()
