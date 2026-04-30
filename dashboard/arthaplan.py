@@ -7,13 +7,11 @@ import plotly.express as px
 # CONFIG
 # ======================
 st.set_page_config(page_title="ArthaPlan Dashboard", layout="wide")
-
 st.title("💰 ArthaPlan Interactive Dashboard")
 
 # ======================
-# LOAD DATA
+# LOAD DATA (ANTI ERROR PATH)
 # ======================
-
 @st.cache_data
 def load_data():
     possible_paths = [
@@ -26,43 +24,57 @@ def load_data():
         if os.path.exists(path):
             return pd.read_csv(path)
     
-    st.error(f"❌ File tidak ditemukan. Cek lokasi file!")
+    st.error("❌ File main_data.csv tidak ditemukan!")
     st.write("📁 Files tersedia:", os.listdir())
     st.stop()
 
 df = load_data()
+
+# ======================
+# VALIDASI KOLOM
+# ======================
+required_cols = ['client_id', 'kategori', 'total_limit', 'jumlah_kartu', 'credit_limit_rupiah', 'overbudget']
+
+missing = [col for col in required_cols if col not in df.columns]
+
+if missing:
+    st.error(f"❌ Kolom tidak ditemukan: {missing}")
+    st.stop()
+
 # ======================
 # SIDEBAR FILTER
 # ======================
-st.sidebar.header("🔧 Filter")
+st.sidebar.header("🔧 Filter Data")
 
 kategori = st.sidebar.multiselect(
     "Pilih Kategori",
     df['kategori'].unique(),
-    default=data['kategori'].unique()
+    default=df['kategori'].unique()
 )
 
 min_limit, max_limit = st.sidebar.slider(
-    "Filter Total Limit",
-    int(data['total_limit'].min()),
-    int(data['total_limit'].max()),
-    (int(data['total_limit'].min()), int(data['total_limit'].max()))
+    "Range Total Limit",
+    int(df['total_limit'].min()),
+    int(df['total_limit'].max()),
+    (int(df['total_limit'].min()), int(df['total_limit'].max()))
 )
 
-data = data[
-    (data['kategori'].isin(kategori)) &
-    (data['total_limit'] >= min_limit) &
-    (data['total_limit'] <= max_limit)
+df = df[
+    (df['kategori'].isin(kategori)) &
+    (df['total_limit'] >= min_limit) &
+    (df['total_limit'] <= max_limit)
 ]
 
 # ======================
 # METRICS
 # ======================
+st.subheader("📊 Ringkasan")
+
 col1, col2, col3 = st.columns(3)
 
-col1.metric("Total User", data['client_id'].nunique())
-col2.metric("Total Limit", f"Rp {data['total_limit'].sum():,.0f}")
-col3.metric("Avg Limit", f"Rp {data['total_limit'].mean():,.0f}")
+col1.metric("Total User", df['client_id'].nunique())
+col2.metric("Total Limit", f"Rp {df['total_limit'].sum():,.0f}")
+col3.metric("Rata-rata Limit", f"Rp {df['total_limit'].mean():,.0f}")
 
 # ======================
 # CHART 1 - PIE
@@ -101,16 +113,16 @@ st.plotly_chart(fig3, use_container_width=True)
 # ======================
 st.subheader("🚨 Overbudget Analysis")
 
-fig4 = px.bar(df['overbudget'].value_counts().reset_index(),
-              x='index', y='overbudget')
+over = df['overbudget'].value_counts().reset_index()
+over.columns = ['status', 'jumlah']
 
-fig4.update_layout(xaxis_title="Status", yaxis_title="Jumlah")
+fig4 = px.bar(over, x='status', y='jumlah', color='status')
 st.plotly_chart(fig4, use_container_width=True)
 
 # ======================
 # TOP USERS
 # ======================
-st.subheader("🏆 Top 10 User dengan Limit Tertinggi")
+st.subheader("🏆 Top 10 User Limit Tertinggi")
 
 top_users = df.sort_values(by='total_limit', ascending=False).head(10)
 st.dataframe(top_users)
@@ -121,7 +133,13 @@ st.dataframe(top_users)
 st.subheader("💡 Insight")
 
 st.info("""
-- User kategori **Boros** mendominasi limit tinggi  
-- Jumlah kartu berbanding lurus dengan total limit  
-- Risiko overbudget meningkat pada user dengan banyak kartu  
+- User kategori **Boros** memiliki limit lebih tinggi  
+- Semakin banyak kartu → potensi overbudget meningkat  
+- ArthaPlan dapat memberikan notifikasi berbasis perilaku user  
 """)
+
+# ======================
+# DATA TABLE
+# ======================
+st.subheader("📋 Data Preview")
+st.dataframe(df.head(50))
