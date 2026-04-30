@@ -1,30 +1,26 @@
 import streamlit as st
 import pandas as pd
 import os
+import plotly.express as px
 
 # ======================
 # CONFIG
 # ======================
 st.set_page_config(page_title="ArthaPlan Dashboard", layout="wide")
 
-st.title("💰 ArthaPlan Financial Dashboard")
+st.title("💰 ArthaPlan Interactive Dashboard")
 
 # ======================
-# LOAD DATA (ANTI ERROR PATH)
+# LOAD DATA
 # ======================
 base_path = os.path.dirname(__file__)
-file_path = os.path.join(base_path, "..", "dashboard/main_data.csv")
+file_path = os.path.join(base_path, "..", "main_data.csv")
 
 @st.cache_data
 def load_data():
     return pd.read_csv(file_path)
 
-try:
-    df = load_data()
-    st.success("✅ Data berhasil dimuat")
-except Exception as e:
-    st.error(f"❌ Gagal load data: {e}")
-    st.stop()
+data = load_data()
 
 # ======================
 # SIDEBAR FILTER
@@ -33,60 +29,90 @@ st.sidebar.header("🔧 Filter")
 
 kategori = st.sidebar.multiselect(
     "Pilih Kategori",
-    df['kategori'].unique(),
-    default=df['kategori'].unique()
+    data['kategori'].unique(),
+    default=data['kategori'].unique()
 )
 
-df = df[df['kategori'].isin(kategori)]
+min_limit, max_limit = st.sidebar.slider(
+    "Filter Total Limit",
+    int(data['total_limit'].min()),
+    int(data['total_limit'].max()),
+    (int(data['total_limit'].min()), int(data['total_limit'].max()))
+)
+
+data = data[
+    (data['kategori'].isin(kategori)) &
+    (data['total_limit'] >= min_limit) &
+    (data['total_limit'] <= max_limit)
+]
 
 # ======================
 # METRICS
 # ======================
-st.subheader("📊 Ringkasan")
-
 col1, col2, col3 = st.columns(3)
 
-col1.metric("Total User", df['client_id'].nunique())
-col2.metric("Total Limit", f"Rp {df['total_limit'].sum():,.0f}")
-col3.metric("Rata-rata Limit", f"Rp {df['total_limit'].mean():,.0f}")
+col1.metric("Total User", data['client_id'].nunique())
+col2.metric("Total Limit", f"Rp {data['total_limit'].sum():,.0f}")
+col3.metric("Avg Limit", f"Rp {data['total_limit'].mean():,.0f}")
 
 # ======================
-# CHART 1 (BUILT-IN)
+# CHART 1 - PIE
 # ======================
 st.subheader("📊 Segmentasi Pengguna")
-st.bar_chart(df['kategori'].value_counts())
+
+fig1 = px.pie(df, names='kategori', title='Distribusi Kategori')
+st.plotly_chart(fig1, use_container_width=True)
 
 # ======================
-# CHART 2
+# CHART 2 - HISTOGRAM
 # ======================
 st.subheader("📈 Distribusi Credit Limit")
-st.bar_chart(df['credit_limit_rupiah'])
+
+fig2 = px.histogram(df, x='credit_limit_rupiah', nbins=50)
+st.plotly_chart(fig2, use_container_width=True)
 
 # ======================
-# CHART 3
+# CHART 3 - SCATTER
 # ======================
-st.subheader("📉 Jumlah Kartu vs Total Limit")
-st.line_chart(df[['jumlah_kartu', 'total_limit']])
+st.subheader("📉 Perilaku Pengguna")
+
+fig3 = px.scatter(
+    df,
+    x='jumlah_kartu',
+    y='total_limit',
+    color='kategori',
+    size='total_limit',
+    hover_data=['client_id']
+)
+
+st.plotly_chart(fig3, use_container_width=True)
 
 # ======================
-# OVERBUDGET
+# CHART 4 - OVERBUDGET
 # ======================
-st.subheader("🚨 Overbudget")
-st.bar_chart(df['overbudget'].value_counts())
+st.subheader("🚨 Overbudget Analysis")
+
+fig4 = px.bar(df['overbudget'].value_counts().reset_index(),
+              x='index', y='overbudget')
+
+fig4.update_layout(xaxis_title="Status", yaxis_title="Jumlah")
+st.plotly_chart(fig4, use_container_width=True)
+
+# ======================
+# TOP USERS
+# ======================
+st.subheader("🏆 Top 10 User dengan Limit Tertinggi")
+
+top_users = df.sort_values(by='total_limit', ascending=False).head(10)
+st.dataframe(top_users)
 
 # ======================
 # INSIGHT
 # ======================
 st.subheader("💡 Insight")
 
-st.write("""
-- Pengguna kategori **Boros** memiliki limit lebih tinggi
-- Semakin banyak kartu → potensi overbudget meningkat
-- ArthaPlan dapat memberikan notifikasi finansial berbasis kategori
+st.info("""
+- User kategori **Boros** mendominasi limit tinggi  
+- Jumlah kartu berbanding lurus dengan total limit  
+- Risiko overbudget meningkat pada user dengan banyak kartu  
 """)
-
-# ======================
-# DATA TABLE
-# ======================
-st.subheader("📋 Data Preview")
-st.dataframe(df.head(50))
