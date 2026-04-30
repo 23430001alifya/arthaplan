@@ -25,6 +25,19 @@ def load_data():
 df = load_data()
 
 # ======================
+# CLEAN DATA
+# ======================
+if 'credit_limit_rupiah' in df.columns:
+    df['credit_limit_rupiah'] = (
+        df['credit_limit_rupiah']
+        .astype(str)
+        .str.replace("Rp", "", regex=False)
+        .str.replace(".", "", regex=False)
+        .astype(float)
+    )
+
+
+# ======================
 # FEATURE ENGINEERING
 # ======================
 if 'total_limit' not in df.columns or 'jumlah_kartu' not in df.columns:
