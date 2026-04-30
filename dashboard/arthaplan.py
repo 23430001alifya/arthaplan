@@ -13,15 +13,24 @@ st.title("💰 ArthaPlan Interactive Dashboard")
 # ======================
 # LOAD DATA
 # ======================
-base_path = os.path.dirname(__file__)
-file_path = os.path.join(base_path, "..", "main_data.csv")
 
 @st.cache_data
 def load_data():
-    return pd.read_csv(file_path)
+    possible_paths = [
+        "main_data.csv",
+        "../main_data.csv",
+        "dashboard/main_data.csv"
+    ]
+    
+    for path in possible_paths:
+        if os.path.exists(path):
+            return pd.read_csv(path)
+    
+    st.error(f"❌ File tidak ditemukan. Cek lokasi file!")
+    st.write("📁 Files tersedia:", os.listdir())
+    st.stop()
 
 df = load_data()
-
 # ======================
 # SIDEBAR FILTER
 # ======================
