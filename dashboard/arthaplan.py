@@ -1,59 +1,43 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 import os
 
+# ======================
+# CONFIG
+# ======================
 st.set_page_config(page_title="ArthaPlan Dashboard", layout="wide")
 
-st.title("💰 ArthaPlan Dashboard")
+st.title("💰 ArthaPlan Financial Dashboard")
 
 # ======================
-# DEBUG FILE
+# LOAD DATA (ANTI ERROR PATH)
 # ======================
-st.write("📁 Files di directory:")
-st.write(os.listdir())
+base_path = os.path.dirname(__file__)
+file_path = os.path.join(base_path, "..", "dashboard/main_data.csv")
 
-# ======================
-# LOAD DATA (AMAN)
-# ======================
+@st.cache_data
+def load_data():
+    return pd.read_csv(file_path)
+
 try:
-    df = pd.read_csv("dashboard/main_data.csv")
+    df = load_data()
     st.success("✅ Data berhasil dimuat")
 except Exception as e:
-    st.error("❌ Gagal load data")
-    st.write(e)
+    st.error(f"❌ Gagal load data: {e}")
     st.stop()
 
 # ======================
-# DEBUG DATA
+# SIDEBAR FILTER
 # ======================
-st.write("📊 Kolom dataset:")
-st.write(df.columns)
+st.sidebar.header("🔧 Filter")
 
-st.write("📄 Preview data:")
-st.dataframe(df.head())
-
-# ======================
-# VALIDASI KOLOM WAJIB
-# ======================
-required_cols = ['kategori', 'credit_limit_rupiah', 'jumlah_kartu', 'total_limit', 'overbudget']
-
-missing_cols = [col for col in required_cols if col not in df.columns]
-
-if missing_cols:
-    st.error(f"❌ Kolom tidak ditemukan: {missing_cols}")
-    st.stop()
-
-# ======================
-# SIDEBAR
-# ======================
-kategori_filter = st.sidebar.multiselect(
-    "Filter Kategori",
+kategori = st.sidebar.multiselect(
+    "Pilih Kategori",
     df['kategori'].unique(),
     default=df['kategori'].unique()
 )
 
-df = df[df['kategori'].isin(kategori_filter)]
+df = df[df['kategori'].isin(kategori)]
 
 # ======================
 # METRICS
@@ -61,32 +45,48 @@ df = df[df['kategori'].isin(kategori_filter)]
 st.subheader("📊 Ringkasan")
 
 col1, col2, col3 = st.columns(3)
+
 col1.metric("Total User", df['client_id'].nunique())
-col2.metric("Total Limit", f"{df['total_limit'].sum():,.0f}")
-col3.metric("Rata-rata Limit", f"{df['total_limit'].mean():,.0f}")
+col2.metric("Total Limit", f"Rp {df['total_limit'].sum():,.0f}")
+col3.metric("Rata-rata Limit", f"Rp {df['total_limit'].mean():,.0f}")
 
 # ======================
-# VISUALISASI
+# CHART 1 (BUILT-IN)
 # ======================
+st.subheader("📊 Segmentasi Pengguna")
 st.bar_chart(df['kategori'].value_counts())
 
+# ======================
+# CHART 2
+# ======================
+st.subheader("📈 Distribusi Credit Limit")
+st.bar_chart(df['credit_limit_rupiah'])
 
-st.subheader("Segmentasi Pengguna")
-fig1, ax1 = plt.subplots()
-df['kategori'].value_counts().plot(kind='bar', ax=ax1)
-st.pyplot(fig1)
+# ======================
+# CHART 3
+# ======================
+st.subheader("📉 Jumlah Kartu vs Total Limit")
+st.line_chart(df[['jumlah_kartu', 'total_limit']])
 
-st.subheader("Distribusi Credit Limit")
-fig2, ax2 = plt.subplots()
-ax2.hist(df['credit_limit_rupiah'], bins=50)
-st.pyplot(fig2)
+# ======================
+# OVERBUDGET
+# ======================
+st.subheader("🚨 Overbudget")
+st.bar_chart(df['overbudget'].value_counts())
 
-st.subheader("Jumlah Kartu vs Total Limit")
-fig3, ax3 = plt.subplots()
-ax3.scatter(df['jumlah_kartu'], df['total_limit'])
-st.pyplot(fig3)
+# ======================
+# INSIGHT
+# ======================
+st.subheader("💡 Insight")
 
-st.subheader("Overbudget")
-fig4, ax4 = plt.subplots()
-df['overbudget'].value_counts().plot(kind='bar', ax=ax4)
-st.pyplot(fig4)
+st.write("""
+- Pengguna kategori **Boros** memiliki limit lebih tinggi
+- Semakin banyak kartu → potensi overbudget meningkat
+- ArthaPlan dapat memberikan notifikasi finansial berbasis kategori
+""")
+
+# ======================
+# DATA TABLE
+# ======================
+st.subheader("📋 Data Preview")
+st.dataframe(df.head(50))
