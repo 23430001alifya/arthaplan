@@ -10,7 +10,12 @@ st.set_page_config(page_title="ArthaPlan Dashboard", layout="wide")
 # ======================
 # LOAD DATA
 # ======================
-df = pd.read_csv("main_data.csv")
+try:
+    df = pd.read_csv("main_data.csv")
+    st.success("Data berhasil dimuat")
+except Exception as e:
+    st.error(f"Gagal load data: {e}")
+    st.stop()
 
 # ======================
 # SIDEBAR
