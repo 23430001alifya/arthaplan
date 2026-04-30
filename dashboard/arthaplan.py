@@ -54,15 +54,15 @@ kategori = st.sidebar.multiselect(
 
 min_limit, max_limit = st.sidebar.slider(
     "Range Total Limit",
-    int(df['total_limit'].min()),
-    int(df['total_limit'].max()),
-    (int(df['total_limit'].min()), int(df['total_limit'].max()))
+    int(data['total_limit'].min()),
+    int(data['total_limit'].max()),
+    (int(data['total_limit'].min()), int(data['total_limit'].max()))
 )
 
 df = df[
     (df['kategori'].isin(kategori)) &
-    (df['total_limit'] >= min_limit) &
-    (df['total_limit'] <= max_limit)
+    (data['total_limit'] >= min_limit) &
+    (data['total_limit'] <= max_limit)
 ]
 
 # ======================
