@@ -88,28 +88,57 @@ if 'overbudget' not in df.columns:
     df['overbudget'] = df['total_limit'] > df['total_limit'].mean()
 
 # ======================
-# SIDEBAR FILTER
+# SIDEBAR STYLE
 # ======================
-st.sidebar.header("🔧 Filter Data")
+st.markdown("""
+    <style>
+    .sidebar .sidebar-content {
+        background-color: #f8fafc;
+    }
+    .filter-box {
+        padding: 15px;
+        border-radius: 12px;
+        background-color: white;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        margin-bottom: 15px;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+st.sidebar.title("⚙️ Filter Data")
+
+# ======================
+# FILTER BOX 1
+# ======================
+st.sidebar.markdown("### 🏷️ Kategori")
 
 kategori_list = df['kategori'].dropna().unique()
 
 kategori = st.sidebar.multiselect(
-    "Pilih Kategori",
+    "Pilih kategori user:",
     kategori_list,
     default=list(kategori_list)
 )
+
+# ======================
+# FILTER BOX 2
+# ======================
+st.sidebar.markdown("### 💰 Total Limit")
 
 min_limit = int(df['total_limit'].min())
 max_limit = int(df['total_limit'].max())
 
 range_limit = st.sidebar.slider(
-    "Range Total Limit",
+    "Range limit (Rp)",
     min_limit,
     max_limit,
-    (min_limit, max_limit)
+    (min_limit, max_limit),
+    step=100000
 )
 
+# ======================
+# APPLY FILTER
+# ======================
 df = df[
     (df['kategori'].isin(kategori)) &
     (df['total_limit'] >= range_limit[0]) &
