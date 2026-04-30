@@ -17,7 +17,7 @@ st.write(os.listdir())
 # LOAD DATA (AMAN)
 # ======================
 try:
-    df = pd.read_csv("main_data.csv")
+    df = pd.read_csv("dashboard/main_data.csv")
     st.success("✅ Data berhasil dimuat")
 except Exception as e:
     st.error("❌ Gagal load data")
